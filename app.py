@@ -2,21 +2,40 @@ import streamlit as st
 import joblib
 import pandas as pd
 
-# Load trained model and column names
 model = joblib.load("fraud_model.pkl")
 model_columns = joblib.load("model_columns.pkl")
 
 st.title("Fraud Detection App")
 
-st.write("Enter transaction details below:")
+# User Inputs
+step = st.number_input("Step", value=1)
+amount = st.number_input("Amount", value=1000.0)
+oldbalanceOrg = st.number_input("Old Balance Origin", value=10000.0)
+newbalanceOrig = st.number_input("New Balance Origin", value=9000.0)
+oldbalanceDest = st.number_input("Old Balance Destination", value=0.0)
+newbalanceDest = st.number_input("New Balance Destination", value=1000.0)
 
-input_data = {}
+# Dropdown for transaction type
+transaction_type = st.selectbox(
+    "Transaction Type",
+    ["CASH_OUT", "PAYMENT", "TRANSFER"]
+)
 
-# Dynamically create input fields for each column
+# Create input dictionary
+input_data = {
+    "step": step,
+    "amount": amount,
+    "oldbalanceOrg": oldbalanceOrg,
+    "newbalanceOrig": newbalanceOrig,
+    "oldbalanceDest": oldbalanceDest,
+    "newbalanceDest": newbalanceDest,
+}
+
+# Add one-hot encoding manually
 for col in model_columns:
-    input_data[col] = st.number_input(f"{col}", value=0.0)
+    if col.startswith("type_"):
+        input_data[col] = 1 if col == f"type_{transaction_type}" else 0
 
-# Convert to DataFrame
 input_df = pd.DataFrame([input_data])
 
 if st.button("Predict"):
@@ -27,3 +46,4 @@ if st.button("Predict"):
         st.error(f"⚠️ Fraud Transaction (Probability: {probability:.2f})")
     else:
         st.success(f"✅ Genuine Transaction (Probability: {probability:.2f})")
+
